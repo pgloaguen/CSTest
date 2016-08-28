@@ -10,9 +10,9 @@ I also kept a reference to the factorial of ids. All of this to avoid to recompu
 
 ## Structure
 
-**MetricFactory**: generates the metrics and also serializes and unserializes Metric objects.
+**MetricFactory**: generates the metrics.
 
-**MetricSerializer**: serializes and unserializes Metric objects.
+**MetricSerializer**: serializes and unserializes the metrics.
 
 **Metric**: contains all metrics data at a given time.
 
