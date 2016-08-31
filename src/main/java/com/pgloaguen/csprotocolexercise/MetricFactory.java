@@ -13,7 +13,7 @@ public class MetricFactory {
     private final byte[] mOsName = System.getProperty("os.name").getBytes();
 
     private int mLastMetricId = 0;
-    private long mFactoriel = 0;
+    private long mFactorial = 0;
 
     /**
      *
@@ -36,14 +36,19 @@ public class MetricFactory {
     }
 
     private int getMetricId() {
+
+        if (mLastMetricId == 0) {
+            mFactorial = 1;
+        } else {
+            mFactorial *= mLastMetricId;
+        }
+
         return mLastMetricId++;
     }
 
     private byte[] getOsName() { return mOsName; }
 
     private short getFactor() {
-        short f = (short) ((mFactoriel / 1000) % 1000);
-        mFactoriel += mLastMetricId;
-        return f;
+        return (short) ((mFactorial / 1000) % 1000);
     }
 }

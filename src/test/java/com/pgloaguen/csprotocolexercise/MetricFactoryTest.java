@@ -15,4 +15,13 @@ public class MetricFactoryTest extends TestCase {
         assertEquals(metricFactory.nextMetric().id + 1, metricFactory.nextMetric().id);
     }
 
+    public void testFactorial() {
+        MetricFactory metricFactory = new MetricFactory();
+        for (int i = 0; i < 7; i++) {
+            metricFactory.nextMetric();
+        }
+
+        assertEquals(5, metricFactory.nextMetric().factorial);
+    }
+
 }
