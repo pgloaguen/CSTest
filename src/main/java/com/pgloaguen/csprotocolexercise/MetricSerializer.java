@@ -2,6 +2,7 @@ package com.pgloaguen.csprotocolexercise;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -32,7 +33,7 @@ public class MetricSerializer {
      * @param lastMetricSent : the metric used to know which fields to send or not
      * @return the serialized metric
      */
-    public byte[] serializedMetric(Metric metric, Metric lastMetricSent) {
+    public boolean serializedMetric(OutputStream os, Metric metric, Metric lastMetricSent) {
         int bufferSize = 1; // 1 for the header
         byte header = 0;
 
@@ -95,7 +96,18 @@ public class MetricSerializer {
             b.putShort(metric.factorial);
         }
 
-        return b.array();
+        try {
+
+            byte[] array = b.array();
+            os.write(array);
+
+            // Just for an indication of the effectiveness of the compression
+            System.out.println("Send " + array.length + " bytes instead of " + maxMetricSize(metric) +  " bytes compressed to " + (array.length / (float)maxMetricSize(metric)) * 100 + "%");
+
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
 
@@ -154,7 +166,7 @@ public class MetricSerializer {
      * @param metrics: the bytes to parse
      * @return the Metric object parsed
      */
-    private static Metric unserializedMetric(byte[] metrics) {
+    private Metric unserializedMetric(byte[] metrics) {
         ByteBuffer m = ByteBuffer.wrap(metrics);
 
         // Get the header which is the first byte

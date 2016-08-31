@@ -3,6 +3,7 @@ package com.pgloaguen.csprotocolexercise;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -10,16 +11,31 @@ import java.nio.ByteBuffer;
  */
 public class MetricSerializerTest extends TestCase {
 
-    private MetricSerializer metricSerializer = new MetricSerializer();
-    private MetricFactory metricFactory = new MetricFactory();
+    private MetricSerializer metricSerializer;
+    private MetricFactory metricFactory;
+    private ByteArrayOutputStream outputStream;
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        metricSerializer = new MetricSerializer();
+        metricFactory = new MetricFactory();
+        outputStream = new ByteArrayOutputStream();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        outputStream.close();
+        super.tearDown();
+    }
 
     public void testHeaderSerializationCompletelyDifferent() {
         Metric m = new Metric(1, 2, 3.0, 4, "android".getBytes(), (short) 5);
         Metric m2 = new Metric(2, 3, 4.0, 5, "iOS".getBytes(), (short) 6);
 
-        byte[] serialized = metricSerializer.serializedMetric(m2, m);
-        byte header = serialized[4];
+        assertTrue(metricSerializer.serializedMetric(outputStream, m2, m));
+        byte header = outputStream.toByteArray()[4];
 
         assertEquals(MetricSerializer.SCREENRES_CHANGED, header & MetricSerializer.SCREENRES_CHANGED);
         assertEquals(MetricSerializer.OSNAME_CHANGED, header & MetricSerializer.OSNAME_CHANGED);
@@ -32,8 +48,8 @@ public class MetricSerializerTest extends TestCase {
         Metric m = new Metric(1, 2, 3.0, 4, "android".getBytes(), (short) 5);
         Metric m2 = new Metric(1, 2, 3.0, 4, "android".getBytes(), (short) 5);
 
-        byte[] serialized = metricSerializer.serializedMetric(m2, m);
-        byte header = serialized[4];
+        assertTrue(metricSerializer.serializedMetric(outputStream, m2, m));
+        byte header = outputStream.toByteArray()[4];
 
         assertEquals(0, header & MetricSerializer.SCREENRES_CHANGED);
         assertEquals(0, header & MetricSerializer.OSNAME_CHANGED);
@@ -46,11 +62,11 @@ public class MetricSerializerTest extends TestCase {
         Metric m = metricFactory.nextMetric();
         Metric m2 = metricFactory.nextMetric();
 
-        byte[] mByte = metricSerializer.serializedMetric(m, null);
-        byte[] mByte2 = metricSerializer.serializedMetric(m2, m);
+        assertTrue(metricSerializer.serializedMetric(outputStream, m, null));
+        assertTrue(metricSerializer.serializedMetric(outputStream, m2, m));
 
 
-        ByteArrayInputStream ins = new ByteArrayInputStream(ByteBuffer.allocate(mByte.length+mByte2.length).put(mByte).put(mByte2).array());
+        ByteArrayInputStream ins = new ByteArrayInputStream(outputStream.toByteArray());
 
         Metric unserializedMetric = metricSerializer.nextMetric(ins, null);
         assertEquals(m, unserializedMetric);

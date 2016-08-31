@@ -31,8 +31,13 @@ public class Producer {
                     // Connect to the server
                     socket = new Socket("localhost", port);
                     while (mIsStarted) {
-                        // Genererate the next Metric object and send it
-                        generateMetricAndSend(socket);
+                        // builds the next Metric object and send it
+                        if (!buildNextMetricAndSend(socket)) {
+                            System.out.println("An error occurred when trying to write in the socket => destroy the producer");
+                            // Here we should save the metrics in a cache and w8 the server comes back instead of just close the client
+                            destroy();
+                            continue;
+                        }
                         try {
                             // Wait 1 to 100 ms randomly
                             Thread.sleep(randomExec.nextInt(100));
@@ -58,28 +63,29 @@ public class Producer {
     }
 
     /**
-     * Send in the socket the next Metric object
-     * @param socket
+     *
+     * Generates and serializes and writes the next metric in the socket
+     *
+     * @param socket : the socket to write in
+     * @return true if no error occurred else false if it was impossible to write in the socket
      */
-    private void generateMetricAndSend(Socket socket) {
+    private boolean buildNextMetricAndSend(Socket socket) {
         try {
 
             // Create the next metric object
             Metric newMetric = mMetricFactory.nextMetric();
 
             // Serialized it (pass the last metric send to limit the size of data send)
-            byte[] serializedMetric =  mMetricSerializer.serializedMetric(newMetric, mLastMetricSend);
+            if (mMetricSerializer.serializedMetric(socket.getOutputStream(), newMetric, mLastMetricSend)) {
+                mLastMetricSend = newMetric;
+                return true;
+            } else {
+                return false;
+            }
 
-            // Send into the socket
-            socket.getOutputStream().write(serializedMetric);
 
-            // Just for an indication of the effectiveness of the compression
-            System.out.println("Send " + serializedMetric.length + " bytes instead of " + mMetricSerializer.maxMetricSize(newMetric) +  " bytes compressed to " + (serializedMetric.length / (float)mMetricSerializer.maxMetricSize(newMetric)) * 100 + "%");
-
-            // Save the last metric send for the next round
-            mLastMetricSend = newMetric;
         } catch (IOException e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
